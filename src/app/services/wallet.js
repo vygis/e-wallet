@@ -23,6 +23,15 @@ angular.module("services")
         	return angular.copy(this.contents);
         }
 
+        this.changeCurrency = function(currency) {
+        	var oldCurrency = this.contents.currency;
+        	this.contents.currency = currency;
+        	_.each(this.contents.entries, function(entry){
+        		entry.amount = CurrencyService.convert(entry.amount, oldCurrency, currency);
+        	});
+        	LocalStorageService.set(WALLET_SERVICE_NAMESPACE, this.contents);
+        	return angular.copy(this.contents);
+        }
     	this.contents = LocalStorageService.get(WALLET_SERVICE_NAMESPACE);
         if(this.contents === null) {
         	this.reset();

@@ -61,6 +61,15 @@ angular.module("services")
         	return angular.copy(this.contents);
         }
 
+        this.changeCurrency = function(currency) {
+        	var oldCurrency = this.contents.currency;
+        	this.contents.currency = currency;
+        	_.each(this.contents.entries, function(entry){
+        		entry.amount = CurrencyService.convert(entry.amount, oldCurrency, currency);
+        	});
+        	LocalStorageService.set(WALLET_SERVICE_NAMESPACE, this.contents);
+        	return angular.copy(this.contents);
+        }
     	this.contents = LocalStorageService.get(WALLET_SERVICE_NAMESPACE);
         if(this.contents === null) {
         	this.reset();
@@ -69,7 +78,7 @@ angular.module("services")
 angular.module("app")
     .controller("mainCtrl", ['$scope', '$timeout', 'WalletService', function ($scope, $timeout, WalletService) {
     	$scope.walletContents = WalletService.get();
-    	$scope.resetWallet = function () {
+    	$scope.resetWallet = function() {
     		$scope.walletContents = WalletService.reset();
     	}
     	$scope.modifyWalletAmount = function(amount) {
@@ -78,15 +87,31 @@ angular.module("app")
     	$scope.displayErrorMessage = function(message) {
     		alert(message);
     	};
+    	$scope.changeWalletCurrency = function(currency) {
+    		$scope.walletContents = WalletService.changeCurrency(currency);
+    	}
     }]);angular.module("directives", []);
-
 angular.module("directives")
+    .directive('currencyDropdown', ['CurrencyService', function(CurrencyService) {
+        return {
+            restrict: 'E',
+            scope: {
+            	currentCurrency: "@",
+                onChange: "&"
+            },
+            templateUrl: 'currency-dropdown.tpl.html',
+            controller: function($scope) {
+                $scope.currencies = CurrencyService.getCurrencyList();
+            }
+        }
+    }]);angular.module("directives")
     .directive('wallet', function() {
         return {
             restrict: 'E',
             scope: {
             	contents: "=",
-                onAction: "&",
+                onEntry: "&",
+                onCurrencyChange: "&",
                 onInvalid: "&"
             },
             template: 
@@ -96,7 +121,8 @@ angular.module("directives")
 	            "<b>Total: <span>{{totalAmount}}</span></b>" +
 	            "<hr/>" +
 	            "Enter quantity: <input type='text' title='Enter Quantity' ng-model='newAmount'/> " + 
-	            "<button type='button' ng-click='modifyAmount(false)'>Add</button> <button type='button' ng-click='modifyAmount(true)'>Remove</button>",
+	            "<button type='button' ng-click='modifyAmount(false)'>Add</button> <button type='button' ng-click='modifyAmount(true)'>Remove</button><br/>" + 
+                "Select currency: <currency-dropdown current-currency='{{contents.currency}}' on-change='changeCurrency(currency)'></currency-dropdown>",
 	            
             controller: function($scope) {
             	var validationStatus;
@@ -114,15 +140,19 @@ angular.module("directives")
             		return 'OK';
             	}
 
+                $scope.changeCurrency = function(currency) {
+                    $scope.onCurrencyChange({'currency': currency})
+                    $scope.reset();
+                }
+
             	$scope.reset = function() {
             	    $scope.newAmount = 0;
             	    $scope.totalAmount = _.reduce($scope.contents.entries, function(memo, entry) { return memo + parseFloat(entry.amount) || 0;}, 0)
             	}
             	$scope.modifyAmount = function(isRemove){
-
             		validationStatus = getValidationStatus($scope.newAmount, $scope.totalAmount, isRemove);
             		if(validationStatus === 'OK') {
-            			$scope.onAction({'amount': isRemove ? -$scope.newAmount : $scope.newAmount});
+            			$scope.onEntry({'amount': isRemove ? -$scope.newAmount : $scope.newAmount});
             		}
             		else {
             			$scope.onInvalid({'message': validationStatus})
@@ -135,7 +165,3 @@ angular.module("directives")
             }
         }
     });
-
-/*
-    
-*/
