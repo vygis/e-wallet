@@ -1,11 +1,25 @@
 angular.module("services", []);
 angular.module("services")
 	.factory('CurrencyService', function() {
-		var currencies = ['USD', 'GBP'],
-			defaultCurrency = 'GBP'
+		var currencies = ['USD', 'GBP', 'EUR'],
+			defaultCurrency = 'GBP',
+			defaultCurrencyRatios = {
+				'USD': 1.51,
+				'EUR': 1.31,
+				'GBP': 1
+			}
 		return {
 			getDefaultCurrency: function() {
 				return defaultCurrency;
+			},
+			getCurrencyList: function() {
+				return angular.copy(currencies);
+			},
+			convert: function(amount, from, to) {
+				if(isNaN(parseFloat(amount)) || !~currencies.indexOf(from) || !~currencies.indexOf(to)){
+					return false;
+				};
+				return amount / defaultCurrencyRatios[from] * defaultCurrencyRatios[to];
 			}
 		}
 	});angular.module("services")
@@ -46,12 +60,11 @@ angular.module("services")
         this.get = function() {
         	return angular.copy(this.contents);
         }
-        
+
     	this.contents = LocalStorageService.get(WALLET_SERVICE_NAMESPACE);
         if(this.contents === null) {
         	this.reset();
-        }        	
-
+        }        
     }]);angular.module("app", ["app.templates", "services", "directives"]);
 angular.module("app")
     .controller("mainCtrl", ['$scope', '$timeout', 'WalletService', function ($scope, $timeout, WalletService) {

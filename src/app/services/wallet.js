@@ -22,10 +22,9 @@ angular.module("services")
         this.get = function() {
         	return angular.copy(this.contents);
         }
-        
+
     	this.contents = LocalStorageService.get(WALLET_SERVICE_NAMESPACE);
         if(this.contents === null) {
         	this.reset();
-        }        	
-
+        }        
     }]);
