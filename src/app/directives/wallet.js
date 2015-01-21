@@ -8,16 +8,7 @@ angular.module("directives")
                 onCurrencyChange: "&",
                 onInvalid: "&"
             },
-            template: 
-	            "<div ng-repeat='entry in contents.entries'>" +
-	            "<span ng-bind='contents.currency'></span><span ng-bind='entry.amount'></span> | <span ng-bind='entry.date'></span>" +
-	            "</div>" + 
-	            "<b>Total: <span>{{totalAmount}}</span></b>" +
-	            "<hr/>" +
-	            "Enter quantity: <input type='text' title='Enter Quantity' ng-model='newAmount'/> " + 
-	            "<button type='button' ng-click='modifyAmount(false)'>Add</button> <button type='button' ng-click='modifyAmount(true)'>Remove</button><br/>" + 
-                "Select currency: <currency-dropdown current-currency='{{contents.currency}}' on-change='changeCurrency(currency)'></currency-dropdown>",
-	            
+            templateUrl: 'wallet.tpl.html',
             controller: function($scope) {
             	var validationStatus;
             	function getValidationStatus(amount, total, isRemove) {
