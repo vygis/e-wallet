@@ -48,7 +48,7 @@
         </nav>
         <div class="container">
             <div class="row">
-                <wallet contents="walletContents" on-action="modifyWalletAmount(amount, isRemove)"></wallet>
+                <wallet contents="walletContents" on-action="modifyWalletAmount(amount, isRemove)" on-invalid="displayErrorMessage(message)"></wallet>
             </div>
         </div>
     </div>

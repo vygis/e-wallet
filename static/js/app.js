@@ -14,11 +14,14 @@ angular.module("app")
     	$scope.resetWallet = function () {
     		$scope.walletContents.entries = [];
     	}
-    	$scope.modifyWalletAmount = function(amount, isRemove) {
+    	$scope.modifyWalletAmount = function(amount) {
     		$scope.walletContents.entries.push({
-    			amount: isRemove ? -amount : amount,
+    			amount: amount,
     			date: Date.now()
     		});
+    	};
+    	$scope.displayErrorMessage = function(message) {
+    		alert(message);
     	};
     }]);angular.module("directives", []);
 
@@ -28,7 +31,8 @@ angular.module("directives")
             restrict: 'E',
             scope: {
             	contents: "=",
-                onAction: "&"
+                onAction: "&",
+                onInvalid: "&"
             },
             template: 
 	            "<div ng-repeat='entry in contents.entries'>" +
@@ -37,25 +41,41 @@ angular.module("directives")
 	            "<b>Total: <span>{{totalAmount}}</span></b>" +
 	            "<hr/>" +
 	            "Enter quantity: <input type='text' title='Enter Quantity' ng-model='newAmount'/> " + 
-	            "<button type='button' ng-click='addValue()'>Add</button> <button type='button' ng-click='subtractValue()'>Remove</button>",
+	            "<button type='button' ng-click='modifyAmount(false)'>Add</button> <button type='button' ng-click='modifyAmount(true)'>Remove</button>",
 	            
             controller: function($scope) {
+            	var validationStatus;
+            	function getValidationStatus(amount, total, isRemove) {
+            		if (!amount.toString().match(/^-?\d*(\.\d+)?$/)) {
+            			return 'Please enter a valid amount';
+            		}
+            		var castAmount = parseFloat(amount);
+            		if(castAmount <= 0) {
+            			return 'Please enter an amount that is larger than 0';
+            		}
+            		if(isRemove && (parseFloat(total) - castAmount < 0)) {
+            			return 'Cannot remove more than the current total inside the wallet';
+            		}
+            		return 'OK';
+            	}
 
             	$scope.reset = function() {
             	    $scope.newAmount = 0;
-            	    console.log('resetting')
             	    $scope.totalAmount = _.reduce($scope.contents.entries, function(memo, entry) { return memo + parseFloat(entry.amount) || 0;}, 0)
             	}
-            	$scope.addValue = function(){
-            		$scope.onAction({'amount': $scope.newAmount, 'isRemove': false});
-            		$scope.reset();
-            	}
-            	$scope.subtractValue = function(){
-            		$scope.onAction({'amount': $scope.newAmount, 'isRemove': true});
+            	$scope.modifyAmount = function(isRemove){
+
+            		validationStatus = getValidationStatus($scope.newAmount, $scope.totalAmount, isRemove);
+            		if(validationStatus === 'OK') {
+            			$scope.onAction({'amount': isRemove ? -$scope.newAmount : $scope.newAmount});
+            		}
+            		else {
+            			$scope.onInvalid({'message': validationStatus})
+            		}
             		$scope.reset();
             	}
             	$scope.$watchCollection('contents.entries', function() {
-            			$scope.reset();
+            		$scope.reset();
             	})
             }
         }

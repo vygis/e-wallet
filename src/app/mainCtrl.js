@@ -12,10 +12,13 @@ angular.module("app")
     	$scope.resetWallet = function () {
     		$scope.walletContents.entries = [];
     	}
-    	$scope.modifyWalletAmount = function(amount, isRemove) {
+    	$scope.modifyWalletAmount = function(amount) {
     		$scope.walletContents.entries.push({
-    			amount: isRemove ? -amount : amount,
+    			amount: amount,
     			date: Date.now()
     		});
+    	};
+    	$scope.displayErrorMessage = function(message) {
+    		alert(message);
     	};
     }]);
