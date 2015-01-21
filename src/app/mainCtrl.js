@@ -1,5 +1,5 @@
 angular.module("app")
-    .controller("mainCtrl", ['$scope', function ($scope) {
+    .controller("mainCtrl", ['$scope', '$timeout', function ($scope, $timeout) {
     	$scope.walletContents = {
     		entries: [
     			{
@@ -9,6 +9,9 @@ angular.module("app")
     		],
     		currency: ['GBP']
     	};
+    	$scope.resetWallet = function () {
+    		$scope.walletContents.entries = [];
+    	}
     	$scope.modifyWalletAmount = function(amount, isRemove) {
     		$scope.walletContents.entries.push({
     			amount: isRemove ? -amount : amount,
