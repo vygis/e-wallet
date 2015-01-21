@@ -1,22 +1,11 @@
 angular.module("app")
-    .controller("mainCtrl", ['$scope', '$timeout', function ($scope, $timeout) {
-    	$scope.walletContents = {
-    		entries: [
-    			{
-    				amount: 10.5,
-    				date: Date.now()
-    			}
-    		],
-    		currency: ['GBP']
-    	};
+    .controller("mainCtrl", ['$scope', '$timeout', 'WalletService', function ($scope, $timeout, WalletService) {
+    	$scope.walletContents = WalletService.get();
     	$scope.resetWallet = function () {
-    		$scope.walletContents.entries = [];
+    		$scope.walletContents = WalletService.reset();
     	}
     	$scope.modifyWalletAmount = function(amount) {
-    		$scope.walletContents.entries.push({
-    			amount: amount,
-    			date: Date.now()
-    		});
+    		$scope.walletContents = WalletService.modifyAmount(amount);
     	};
     	$scope.displayErrorMessage = function(message) {
     		alert(message);

@@ -1,24 +1,66 @@
 angular.module("services", []);
-angular.module("app", ["app.templates", "services", "directives"]);
+angular.module("services")
+	.factory('CurrencyService', function() {
+		var currencies = ['USD', 'GBP'],
+			defaultCurrency = 'GBP'
+		return {
+			getDefaultCurrency: function() {
+				return defaultCurrency;
+			}
+		}
+	});angular.module("services")
+	.factory('LocalStorageService', ['$window', function($window) {
+		var localStorage = $window.localStorage,
+			JSON = $window.JSON;
+		return {
+			get: function(namespace) {
+				return JSON.parse(localStorage.getItem(namespace));
+			},
+			set: function(namespace, payload) {
+				localStorage.setItem(namespace, JSON.stringify(payload));
+			}
+
+
+		}
+	}]);angular.module("services")
+	.constant('WALLET_SERVICE_NAMESPACE', 'wallet')
+    .service('WalletService', ['$window', 'LocalStorageService', 'CurrencyService', 'WALLET_SERVICE_NAMESPACE', function ($window, LocalStorageService, CurrencyService, WALLET_SERVICE_NAMESPACE) {
+        this.modifyAmount = function(amount){
+        	this.contents.entries.push({
+        		amount: amount,
+        		date: Date.now() 
+        	});
+        	LocalStorageService.set(WALLET_SERVICE_NAMESPACE, this.contents);
+        	return angular.copy(this.contents);
+        }
+
+        this.reset = function() {
+         	this.contents = {
+        		entries: [],
+        		currency: CurrencyService.getDefaultCurrency()
+        	};
+        	LocalStorageService.set(WALLET_SERVICE_NAMESPACE, this.contents);
+        	return angular.copy(this.contents);     	
+        };
+
+        this.get = function() {
+        	return angular.copy(this.contents);
+        }
+        
+    	this.contents = LocalStorageService.get(WALLET_SERVICE_NAMESPACE);
+        if(this.contents === null) {
+        	this.reset();
+        }        	
+
+    }]);angular.module("app", ["app.templates", "services", "directives"]);
 angular.module("app")
-    .controller("mainCtrl", ['$scope', '$timeout', function ($scope, $timeout) {
-    	$scope.walletContents = {
-    		entries: [
-    			{
-    				amount: 10.5,
-    				date: Date.now()
-    			}
-    		],
-    		currency: ['GBP']
-    	};
+    .controller("mainCtrl", ['$scope', '$timeout', 'WalletService', function ($scope, $timeout, WalletService) {
+    	$scope.walletContents = WalletService.get();
     	$scope.resetWallet = function () {
-    		$scope.walletContents.entries = [];
+    		$scope.walletContents = WalletService.reset();
     	}
     	$scope.modifyWalletAmount = function(amount) {
-    		$scope.walletContents.entries.push({
-    			amount: amount,
-    			date: Date.now()
-    		});
+    		$scope.walletContents = WalletService.modifyAmount(amount);
     	};
     	$scope.displayErrorMessage = function(message) {
     		alert(message);
