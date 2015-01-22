@@ -1,5 +1,5 @@
 angular.module("directives")
-    .directive('wallet', function() {
+    .directive('wallet', ['$filter', 'CurrencyService', function($filter, CurrencyService) {
         return {
             restrict: 'E',
             scope: {
@@ -25,6 +25,8 @@ angular.module("directives")
             		return 'OK';
             	}
 
+                $scope.CurrencyService = CurrencyService;
+
                 $scope.changeCurrency = function(currency) {
                     $scope.onCurrencyChange({'currency': currency})
                     $scope.reset();
@@ -49,4 +51,4 @@ angular.module("directives")
             	})
             }
         }
-    });
+    }]);

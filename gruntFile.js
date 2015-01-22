@@ -6,7 +6,8 @@ module.exports = function (grunt) {
         src: {
             jsFiles:  ['src/app/**/*.js'],
             templateFiles:  ['src/templates/**/*.tpl.html'],
-            vendorFiles: ['src/vendor/**/*.js']
+            vendorJSFiles: ['src/vendor/**/*.js'],
+            vendorCSSFiles: ['src/vendor/**/*.css']
         },
         concat: {
             options: {
@@ -21,11 +22,17 @@ module.exports = function (grunt) {
                 ],
                 dest: 'static/js/app.js'
             },
-            vendor: {
+            vendorJS: {
                 src: [
-                    ['<%= src.vendorFiles %>']
+                    ['<%= src.vendorJSFiles %>']
                 ],
                 dest: 'static/js/vendor.js'
+            },
+            vendorCSS: {
+                src: [
+                    ['<%= src.vendorCSSFiles %>']
+                ],
+                dest: 'static/css/vendor.css'
             }
         },
         html2js: {
@@ -39,7 +46,7 @@ module.exports = function (grunt) {
             }
         },
         watch: {
-            files: ['<%= src.jsFiles %>', '<%= src.templateFiles %>', '<%= src.vendorFiles %>'],
+            files: ['<%= src.jsFiles %>', '<%= src.templateFiles %>', '<%= src.vendorJSFiles %>', '<%= src.vendorCSSFiles %>'],
             tasks: ['concat', 'html2js'],
             options: {
                 spawn: false,

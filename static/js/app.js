@@ -7,6 +7,11 @@ angular.module("services")
 				'USD': 1.51,
 				'EUR': 1.31,
 				'GBP': 1
+			},
+			currencySymbols = {
+				'USD': '$',
+				'EUR': '€',
+				'GBP': '£'
 			}
 		return {
 			getDefaultCurrency: function() {
@@ -14,6 +19,9 @@ angular.module("services")
 			},
 			getCurrencyList: function() {
 				return angular.copy(currencies);
+			},
+			getCurrencySymbol: function(currencyString) {
+				return currencySymbols[currencyString] || false;
 			},
 			convert: function(amount, from, to) {
 				if(isNaN(parseFloat(amount)) || !~currencies.indexOf(from) || !~currencies.indexOf(to)){
@@ -105,7 +113,7 @@ angular.module("directives")
             }
         }
     }]);angular.module("directives")
-    .directive('wallet', function() {
+    .directive('wallet', ['$filter', 'CurrencyService', function($filter, CurrencyService) {
         return {
             restrict: 'E',
             scope: {
@@ -131,6 +139,8 @@ angular.module("directives")
             		return 'OK';
             	}
 
+                $scope.CurrencyService = CurrencyService;
+
                 $scope.changeCurrency = function(currency) {
                     $scope.onCurrencyChange({'currency': currency})
                     $scope.reset();
@@ -155,4 +165,4 @@ angular.module("directives")
             	})
             }
         }
-    });
+    }]);
