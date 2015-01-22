@@ -49,7 +49,7 @@
         </nav>
         <div class="container">
             <div class="row">
-                <wallet contents="walletContents" on-entry="modifyWalletAmount(amount, isRemove)" on-invalid="displayErrorMessage(message)" on-currency-change="changeWalletCurrency(currency)"></wallet>
+                <wallet contents="walletContents" on-entry="addWalletEntry(amount, isRemove)" on-invalid="displayErrorMessage(message)" on-currency-change="changeWalletCurrency(currency)"></wallet>
             </div>
         </div>
     </div>

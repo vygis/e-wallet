@@ -1,15 +1,18 @@
 angular.module("services")
-	.factory('LocalStorageService', ['$window', function($window) {
+	.factory('LocalStorageService', ['$window', '$q', function($window, $q) {
 		var localStorage = $window.localStorage,
 			JSON = $window.JSON;
 		return {
 			get: function(namespace) {
-				return JSON.parse(localStorage.getItem(namespace));
+				var deferred = $q.defer();
+				deferred.resolve(JSON.parse(localStorage.getItem(namespace)))
+				return deferred.promise;
 			},
 			set: function(namespace, payload) {
-				localStorage.setItem(namespace, JSON.stringify(payload));
+				var deferred = $q.defer();
+				localStorage.setItem(namespace, JSON.stringify(payload))
+				deferred.resolve(payload);
+				return deferred.promise;
 			}
-
-
 		}
 	}]);

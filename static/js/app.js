@@ -31,74 +31,129 @@ angular.module("services")
 			}
 		}
 	});angular.module("services")
-	.factory('LocalStorageService', ['$window', function($window) {
+	.factory('LocalStorageService', ['$window', '$q', function($window, $q) {
 		var localStorage = $window.localStorage,
 			JSON = $window.JSON;
 		return {
 			get: function(namespace) {
-				return JSON.parse(localStorage.getItem(namespace));
+				var deferred = $q.defer();
+				deferred.resolve(JSON.parse(localStorage.getItem(namespace)))
+				return deferred.promise;
 			},
 			set: function(namespace, payload) {
-				localStorage.setItem(namespace, JSON.stringify(payload));
+				var deferred = $q.defer();
+				localStorage.setItem(namespace, JSON.stringify(payload))
+				deferred.resolve(payload);
+				return deferred.promise;
 			}
-
-
 		}
 	}]);angular.module("services")
-	.constant('WALLET_SERVICE_NAMESPACE', 'wallet')
-    .service('WalletService', ['$window', 'LocalStorageService', 'CurrencyService', 'WALLET_SERVICE_NAMESPACE', function ($window, LocalStorageService, CurrencyService, WALLET_SERVICE_NAMESPACE) {
-        this.modifyAmount = function(amount){
-        	this.contents.entries.push({
-        		amount: amount,
-        		date: Date.now() 
-        	});
-        	LocalStorageService.set(WALLET_SERVICE_NAMESPACE, this.contents);
-        	return angular.copy(this.contents);
+    .constant('WALLET_SERVICE_NAMESPACE', 'wallet')
+    .factory('WalletService', ['$window', '$q', '$timeout', 'LocalStorageService', 'CurrencyService', 'WALLET_SERVICE_NAMESPACE', function ($window, $q, $timeout, LocalStorageService, CurrencyService, WALLET_SERVICE_NAMESPACE) {
+
+        var _cachedResponse = null;
+
+        function _get(){
+            var deferred = $q.defer();
+            if(_cachedResponse){
+                deferred.resolve(_cachedResponse);
+            }
+            else {
+                LocalStorageService.get(WALLET_SERVICE_NAMESPACE).then(function(response){
+                    if(response === null) { //initialising if localStorage slot is empty
+                        _reset().then(function(response){
+                            _cachedResponse = response;
+                            deferred.resolve(response);
+                        });
+                    }
+                    else {
+                        cachedResponse = response;
+                        deferred.resolve(response);
+                    }
+                });               
+            }
+            return deferred.promise;
         }
 
-        this.reset = function() {
-         	this.contents = {
-        		entries: [],
-        		currency: CurrencyService.getDefaultCurrency()
-        	};
-        	LocalStorageService.set(WALLET_SERVICE_NAMESPACE, this.contents);
-        	return angular.copy(this.contents);     	
-        };
-
-        this.get = function() {
-        	return angular.copy(this.contents);
+        function _set(payload) {
+            _cachedResponse = payload;
+            return LocalStorageService.set(WALLET_SERVICE_NAMESPACE, payload);
         }
 
-        this.changeCurrency = function(currency) {
-        	var oldCurrency = this.contents.currency;
-        	this.contents.currency = currency;
-        	_.each(this.contents.entries, function(entry){
-        		entry.amount = CurrencyService.convert(entry.amount, oldCurrency, currency);
-        	});
-        	LocalStorageService.set(WALLET_SERVICE_NAMESPACE, this.contents);
-        	return angular.copy(this.contents);
+        function _reset() {
+            var emptyContents = {
+                    entries: [],
+                    currency: CurrencyService.getDefaultCurrency()
+                },
+                promise = _set(emptyContents);
+
+            promise.then(function(response){
+                return response;
+            })
+            return promise;
         }
-    	this.contents = LocalStorageService.get(WALLET_SERVICE_NAMESPACE);
-        if(this.contents === null) {
-        	this.reset();
-        }        
+
+        function _addEntry(amount) {
+            var deferred = $q.defer();
+            _get().then(function(response){
+                response.entries.push({
+                    amount: amount,
+                    date: Date.now() 
+                });
+                _set(response).then(function(response){
+                    deferred.resolve(angular.copy(response));
+                });
+            });
+            return deferred.promise;
+        }
+
+        function _changeCurrency(currency) {
+             var deferred = $q.defer();
+            _get().then(function(response){
+                var oldCurrency = response.currency;
+                response.currency = currency;
+                _.each(response.entries, function(entry){
+                    entry.amount = CurrencyService.convert(entry.amount, oldCurrency, currency);
+                });
+                _set(response).then(function(response){
+                    deferred.resolve(angular.copy(response));
+                });
+            });
+            return deferred.promise;           
+        }
+
+        return {
+            get: _get,
+            reset: _reset,
+            addEntry: _addEntry,
+            changeCurrency: _changeCurrency
+        }
     }]);angular.module("app", ["app.templates", "services", "directives"]);
 angular.module("app")
     .controller("mainCtrl", ['$scope', '$timeout', 'WalletService', function ($scope, $timeout, WalletService) {
-    	$scope.walletContents = WalletService.get();
+    	WalletService.get().then(function(response){
+            $scope.walletContents = response;
+        });
     	$scope.resetWallet = function() {
-    		$scope.walletContents = WalletService.reset();
+    		WalletService.reset().then(function(response){
+               $scope.walletContents = response; 
+            });
     	}
-    	$scope.modifyWalletAmount = function(amount) {
-    		$scope.walletContents = WalletService.modifyAmount(amount);
+    	$scope.addWalletEntry = function(amount) {
+    		WalletService.addEntry(amount).then(function(response){
+                $scope.walletContents = response;
+            });
     	};
     	$scope.displayErrorMessage = function(message) {
     		alert(message);
     	};
     	$scope.changeWalletCurrency = function(currency) {
-    		$scope.walletContents = WalletService.changeCurrency(currency);
+    		WalletService.changeCurrency(currency).then(function(response){
+                $scope.walletContents = response;
+            });
     	}
-    }]);angular.module("directives", []);
+    }]);
+angular.module("directives", []);
 angular.module("directives")
     .directive('currencyDropdown', ['CurrencyService', function(CurrencyService) {
         return {
@@ -160,8 +215,10 @@ angular.module("directives")
             		}
             		$scope.reset();
             	}
-            	$scope.$watchCollection('contents.entries', function() {
-            		$scope.reset();
+            	$scope.$watchCollection('contents.entries', function(entries) {
+                    if(entries){
+                        $scope.reset();
+                    }
             	})
             }
         }

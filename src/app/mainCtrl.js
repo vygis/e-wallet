@@ -1,16 +1,24 @@
 angular.module("app")
     .controller("mainCtrl", ['$scope', '$timeout', 'WalletService', function ($scope, $timeout, WalletService) {
-    	$scope.walletContents = WalletService.get();
+    	WalletService.get().then(function(response){
+            $scope.walletContents = response;
+        });
     	$scope.resetWallet = function() {
-    		$scope.walletContents = WalletService.reset();
+    		WalletService.reset().then(function(response){
+               $scope.walletContents = response; 
+            });
     	}
-    	$scope.modifyWalletAmount = function(amount) {
-    		$scope.walletContents = WalletService.modifyAmount(amount);
+    	$scope.addWalletEntry = function(amount) {
+    		WalletService.addEntry(amount).then(function(response){
+                $scope.walletContents = response;
+            });
     	};
     	$scope.displayErrorMessage = function(message) {
     		alert(message);
     	};
     	$scope.changeWalletCurrency = function(currency) {
-    		$scope.walletContents = WalletService.changeCurrency(currency);
+    		WalletService.changeCurrency(currency).then(function(response){
+                $scope.walletContents = response;
+            });
     	}
     }]);

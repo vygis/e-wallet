@@ -46,8 +46,10 @@ angular.module("directives")
             		}
             		$scope.reset();
             	}
-            	$scope.$watchCollection('contents.entries', function() {
-            		$scope.reset();
+            	$scope.$watchCollection('contents.entries', function(entries) {
+                    if(entries){
+                        $scope.reset();
+                    }
             	})
             }
         }
